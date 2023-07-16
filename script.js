@@ -5,7 +5,7 @@ let gameBoard = [
   ["", "", ""],
 ];
 
-const chekwin = () => {
+const checkWin = () => {
   for (let row = 0; row < 3; row++) {
     if (
       gameBoard[row][0] === currentPlayer &&
