@@ -1,16 +1,31 @@
-const board = ["", "", "", "", "", "", "", "", ""];
+// Переменные для игры
+let board = ["", "", "", "", "", "", "", "", ""];
 let currentPlayer = "X";
+let botPlayer = "O";
 let gameEnded = false;
 let winsX = 0;
 let winsO = 0;
 let gameMode = "playerVsPlayer";
-let botPlayer = "O";
 
+// Выигрышные комбинации
+const winCombos = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [6, 4, 2],
+];
+
+// Функция для установки режима игры
 function setGameMode(mode) {
   gameMode = mode;
   restartGame();
 }
 
+// Функция для выполнения хода игрока
 function play(index) {
   if (gameEnded) {
     return;
@@ -34,44 +49,115 @@ function play(index) {
     }
 
     if (checkWin()) {
-      resultElement.innerText = `Игрок ${currentPlayer} победил!`;
+      resultElement.innerText = `Player ${currentPlayer} wins!`;
       disableCells();
       gameEnded = true;
 
       if (currentPlayer === "X") {
         winsX++;
-        document.getElementById("winsX").innerText = `Побед X: ${winsX}`;
+        document.getElementById("winsX").innerText = `Wins X: ${winsX}`;
       } else {
         winsO++;
-        document.getElementById("winsO").innerText = `Побед O: ${winsO}`;
+        document.getElementById("winsO").innerText = `Wins O: ${winsO}`;
       }
     } else if (checkDraw()) {
-      resultElement.innerText = "Ничья!";
+      resultElement.innerText = "It's a draw!";
       gameEnded = true;
     } else {
       currentPlayer = currentPlayer === "X" ? "O" : "X";
       document.getElementById(
         "player"
-      ).innerText = `Ход игрока: ${currentPlayer}`;
+      ).innerText = `Player's turn: ${currentPlayer}`;
 
       if (gameMode === "playerVsBot" && currentPlayer === botPlayer) {
         setTimeout(botPlay, 1000);
       }
     }
   } else {
-    resultElement.innerText = "Эта ячейка уже занята. Выберите другую.";
+    resultElement.innerText = "This cell is already occupied. Choose another.";
   }
 }
 
-function botPlay() {
-  if (currentPlayer === botPlayer) {
-    let bestMove = findBestMove();
-    if (bestMove !== undefined) {
-      play(bestMove);
+// Функция для выполнения хода бота
+// Функция для определения победного хода
+function findWinningMove(player) {
+  for (let i = 0; i < 9; i++) {
+    if (board[i] === "") {
+      board[i] = player;
+      if (checkWin(player)) {
+        board[i] = "";
+        return i;
+      }
+      board[i] = "";
     }
   }
+  return undefined;
 }
 
+// Функция для выбора лучшего доступного хода
+function chooseBestMove(moves) {
+  let bestMove;
+  let corners = [0, 2, 6, 8];
+  let availableCorners = corners.filter((corner) => moves.includes(corner));
+
+  // Если есть возможность взять центр, выбрать его
+  if (moves.includes(4)) {
+    bestMove = 4;
+  }
+  // Если игрок начал в угол, выбрать противоположный угол
+  else if (moves.length === 7) {
+    bestMove = availableCorners[0];
+  }
+  // Выбрать случайный доступный ход
+  else if (availableCorners.length > 0) {
+    bestMove =
+      availableCorners[Math.floor(Math.random() * availableCorners.length)];
+  }
+  // В остальных случаях выбрать случайный доступный ход
+  else {
+    const randomIndex = Math.floor(Math.random() * moves.length);
+    bestMove = moves[randomIndex];
+  }
+  return bestMove;
+}
+
+// В функции botPlay убедитесь, что currentPlayer равно botPlayer, прежде чем бот сделает ход
+function botPlay() {
+  if (currentPlayer !== botPlayer || gameEnded) {
+    return;
+  }
+
+  let bestMove;
+
+  // Попытка выиграть игру
+  bestMove = findWinningMove(botPlayer);
+
+  // Если нет возможности выиграть, попробовать блокировать игрока
+  if (!bestMove) {
+    bestMove = findWinningMove(currentPlayer);
+  }
+
+  // Если нет возможности выиграть или блокировать, выбрать лучший доступный ход
+  if (!bestMove) {
+    const availableMoves = getAvailableMoves();
+    bestMove = chooseBestMove(availableMoves);
+  }
+
+  if (bestMove !== undefined) {
+    play(bestMove);
+  }
+}
+
+// Функция для нахождения лучшего хода
+function getAvailableMoves() {
+  const availableMoves = [];
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === "") {
+      availableMoves.push(i);
+    }
+  }
+  return availableMoves;
+}
 function findBestMove() {
   let bestMove;
   let bestScore = -Infinity;
@@ -91,84 +177,56 @@ function findBestMove() {
 
   return bestMove;
 }
-
-function minimax(board, depth, isMaximizing) {
-  let scores = {
-    X: -1,
-    O: 1,
-    draw: 0,
-  };
-
+// Функция для выполнения минимаксного алгоритма
+function minimax(board, player, isMaximizing) {
   if (checkWin()) {
-    return scores[currentPlayer] - depth;
+    return isMaximizing ? -1 : 1;
   } else if (checkDraw()) {
-    return scores["draw"];
+    return 0;
   }
 
-  let bestScore, bestMove;
-
   if (isMaximizing) {
-    bestScore = -Infinity;
+    let bestScore = -Infinity;
     for (let i = 0; i < 9; i++) {
       if (board[i] === "") {
         board[i] = botPlayer;
-        let score = minimax(board, depth + 1, false);
+        let score = minimax(board, player, false);
         board[i] = "";
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = i;
-        }
+        bestScore = Math.max(score, bestScore);
       }
     }
+    return bestScore;
   } else {
-    bestScore = Infinity;
+    let bestScore = Infinity;
     for (let i = 0; i < 9; i++) {
       if (board[i] === "") {
         board[i] = currentPlayer;
-        let score = minimax(board, depth + 1, true);
+        let score = minimax(board, player, true);
         board[i] = "";
-        if (score < bestScore) {
-          bestScore = score;
-          bestMove = i;
-        }
+        bestScore = Math.min(score, bestScore);
       }
     }
+    return bestScore;
   }
-
-  if (depth === 0) {
-    return bestMove;
-  }
-
-  return bestScore;
 }
 
+// Функция для проверки выигрыша
 function checkWin() {
-  const winPatterns = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
-
-  for (const pattern of winPatterns) {
-    const [a, b, c] = pattern;
+  for (const combo of winCombos) {
+    const [a, b, c] = combo;
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
       return true;
     }
   }
-
   return false;
 }
 
+// Функция для проверки ничьей
 function checkDraw() {
   return !board.includes("");
 }
 
+// Функция для отключения клеток после завершения игры
 function disableCells() {
   const cells = document.getElementsByClassName("cell");
   for (const cell of cells) {
@@ -176,6 +234,7 @@ function disableCells() {
   }
 }
 
+// Функция для перезапуска игры
 function restartGame() {
   board.fill("");
   const cells = document.getElementsByClassName("cell");
@@ -185,18 +244,11 @@ function restartGame() {
     cell.style.background = "";
   }
 
-  document.getElementById("player").innerText = "Ход игрока: X";
+  document.getElementById("player").innerText = `Player's turn: X`;
   document.getElementById("result").innerText = "";
   gameEnded = false;
 
   if (gameMode === "playerVsBot" && currentPlayer === botPlayer) {
     setTimeout(botPlay, 1000);
   }
-}
-
-document.getElementById("restartButton").addEventListener("click", restartGame);
-
-const cells = document.getElementsByClassName("cell");
-for (let i = 0; i < cells.length; i++) {
-  cells[i].addEventListener("click", () => play(i));
 }
