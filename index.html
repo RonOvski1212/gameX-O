@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Крестики-нолики</title>
+    <title>Tic Tac Toe</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div id="box">
-        <div id="winsX">Побед X: 0</div>
-        <div id="winsO">Побед O: 0</div>
+        <div id="winsX">Victory X: 0</div>
+        <div id="winsO">Victory O: 0</div>
 
         <div class="board">
             <div class="cell" id="cell0" onclick="play(0)"></div>
@@ -24,15 +24,15 @@
             <div class="cell" id="cell7" onclick="play(7)"></div>
             <div class="cell" id="cell8" onclick="play(8)"></div>
         </div>
-        <div id="player">Ход игрока: X</div>
+        <div id="player">Player move: X</div>
         <div id="result"></div>
-        <button id="restartButton">Рестарт</button>
+        <button id="restartButton" onclick="restartGame()">Refresh</button>
+        <div class="game-mode-buttons">
+            <button id="playerVsPlayerButton" onclick="setGameMode('playerVsPlayer')">Player vs Player</button>
+            <button onclick="setGameMode('playerVsBot')">Player vs Bot</button>
+
+        </div>
     </div>
-
-
-
-
-
     <script src="script.js"></script>
 </body>
 
