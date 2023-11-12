@@ -1,4 +1,3 @@
-// Переменные для игры
 let board = ["", "", "", "", "", "", "", "", ""];
 let currentPlayer = "X";
 let botPlayer = "O";
@@ -7,7 +6,6 @@ let winsX = 0;
 let winsO = 0;
 let gameMode = "playerVsPlayer";
 
-// Выигрышные комбинации
 const winCombos = [
   [0, 1, 2],
   [3, 4, 5],
@@ -19,13 +17,11 @@ const winCombos = [
   [6, 4, 2],
 ];
 
-// Функция для установки режима игры
 function setGameMode(mode) {
   gameMode = mode;
   restartGame();
 }
 
-// Функция для выполнения хода игрока
 function play(index) {
   if (gameEnded) {
     return;
@@ -78,8 +74,6 @@ function play(index) {
   }
 }
 
-// Функция для выполнения хода бота
-// Функция для определения победного хода
 function findWinningMove(player) {
   for (let i = 0; i < 9; i++) {
     if (board[i] === "") {
@@ -94,34 +88,25 @@ function findWinningMove(player) {
   return undefined;
 }
 
-// Функция для выбора лучшего доступного хода
 function chooseBestMove(moves) {
   let bestMove;
   let corners = [0, 2, 6, 8];
   let availableCorners = corners.filter((corner) => moves.includes(corner));
 
-  // Если есть возможность взять центр, выбрать его
   if (moves.includes(4)) {
     bestMove = 4;
-  }
-  // Если игрок начал в угол, выбрать противоположный угол
-  else if (moves.length === 7) {
+  } else if (moves.length === 7) {
     bestMove = availableCorners[0];
-  }
-  // Выбрать случайный доступный ход
-  else if (availableCorners.length > 0) {
+  } else if (availableCorners.length > 0) {
     bestMove =
       availableCorners[Math.floor(Math.random() * availableCorners.length)];
-  }
-  // В остальных случаях выбрать случайный доступный ход
-  else {
+  } else {
     const randomIndex = Math.floor(Math.random() * moves.length);
     bestMove = moves[randomIndex];
   }
   return bestMove;
 }
 
-// В функции botPlay убедитесь, что currentPlayer равно botPlayer, прежде чем бот сделает ход
 function botPlay() {
   if (currentPlayer !== botPlayer || gameEnded) {
     return;
@@ -129,15 +114,12 @@ function botPlay() {
 
   let bestMove;
 
-  // Попытка выиграть игру
   bestMove = findWinningMove(botPlayer);
 
-  // Если нет возможности выиграть, попробовать блокировать игрока
   if (!bestMove) {
     bestMove = findWinningMove(currentPlayer);
   }
 
-  // Если нет возможности выиграть или блокировать, выбрать лучший доступный ход
   if (!bestMove) {
     const availableMoves = getAvailableMoves();
     bestMove = chooseBestMove(availableMoves);
@@ -148,7 +130,6 @@ function botPlay() {
   }
 }
 
-// Функция для нахождения лучшего хода
 function getAvailableMoves() {
   const availableMoves = [];
   for (let i = 0; i < board.length; i++) {
@@ -177,7 +158,7 @@ function findBestMove() {
 
   return bestMove;
 }
-// Функция для выполнения минимаксного алгоритма
+
 function minimax(board, player, isMaximizing) {
   if (checkWin()) {
     return isMaximizing ? -1 : 1;
@@ -210,7 +191,6 @@ function minimax(board, player, isMaximizing) {
   }
 }
 
-// Функция для проверки выигрыша
 function checkWin() {
   for (const combo of winCombos) {
     const [a, b, c] = combo;
@@ -221,12 +201,10 @@ function checkWin() {
   return false;
 }
 
-// Функция для проверки ничьей
 function checkDraw() {
   return !board.includes("");
 }
 
-// Функция для отключения клеток после завершения игры
 function disableCells() {
   const cells = document.getElementsByClassName("cell");
   for (const cell of cells) {
@@ -234,7 +212,6 @@ function disableCells() {
   }
 }
 
-// Функция для перезапуска игры
 function restartGame() {
   board.fill("");
   const cells = document.getElementsByClassName("cell");
